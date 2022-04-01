@@ -15,10 +15,12 @@
     int line_num = 0;
     int comment_num = 0;
     int last_comment_line = -1;
-    int is_comment = 0;
     int is_string = 0;
 %}
 
+%x COMMENT
+%x CPPCOMMENT
+%x STRING
 
 /* Define regular expression label */
 letter [a-zA-Z_]
@@ -26,8 +28,7 @@ digit [0-9]
 id {letter}+({letter}|{digit})*
 inumber {digit}+
 fnumber ({digit}*\.{digit}+)
-
-string \"(.)*\"
+blank_chars	([ \f\r\t\v]+)
 Ccomment \/\*(.)*(\n)*\*\/
 Cppcomment \/\/.*
 
@@ -65,11 +66,27 @@ Cppcomment \/\/.*
 "}"         { print_token("RBRACE"); }
 ";"         { print_token("SEMICOLON"); }
 ","         { print_token("COMMA"); }
-"\""        { print_token("QUOTA"); 
-              if (is_string){ is_string = 0; }
-              else { is_string = 1; }  
-            }
-"\n"        { print_token("NEWLINE"); line_num++;}
+
+"\""        { print_token("QUOTA"); BEGIN STRING; }
+
+<STRING>"\"" { print_token("QUOTA"); BEGIN INITIAL; }
+<STRING>({letter}|{digit}|{blank_chars})* { print_token("STRING_LIT"); }
+
+
+
+
+{Cppcomment} { print_token("C++ Comment"); BEGIN CPPCOMMENT; }
+<CPPCOMMENT>"." {}
+<CPPCOMMENT> { comment_num++; BEGIN INITIAL; }
+
+"\/\*"      { printf("/");
+              printf("*");
+              BEGIN COMMENT; }
+<COMMENT>"\*\/\n"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }      
+<COMMENT>"\*\/"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }
+<COMMENT>"."    { print_token(""); }
+
+"\n"        { print_token("NEWLINE"); line_num++; }
 ":"         { print_token("COLON"); }
 
 "print"     { print_token("PRINT"); }
@@ -94,9 +111,8 @@ Cppcomment \/\/.*
 {id}        { print_token("IDENT"); }
 {inumber}   { print_token("INT_LIT"); }
 {fnumber}   { print_token("FLOAT_LIT"); }
-{string}    { print_token("STRING_LIT"); }
-{Ccomment}   { print_token("C Comment"); }
-{Cppcomment} { print_token("C++ Comment"); comment_num++;}
+
+
 <<EOF>>     { line_num++; yyterminate(); }
 
 [ \t]+      {;}
