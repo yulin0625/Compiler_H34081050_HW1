@@ -18,7 +18,7 @@
     int is_string = 0;
 %}
 
-%x COMMENT
+%x CCOMMENT
 %x CPPCOMMENT
 %x STRING
 
@@ -29,7 +29,6 @@ id {letter}+({letter}|{digit})*
 inumber {digit}+
 fnumber ({digit}*\.{digit}+)
 blank_chars	([ \f\r\t\v]+)
-Ccomment \/\*(.)*(\n)*\*\/
 Cppcomment \/\/.*
 
 /* Rules section */
@@ -67,24 +66,18 @@ Cppcomment \/\/.*
 ";"         { print_token("SEMICOLON"); }
 ","         { print_token("COMMA"); }
 
-"\""        { print_token("QUOTA"); BEGIN STRING; }
-
+"\""         { print_token("QUOTA"); BEGIN STRING; }
 <STRING>"\"" { print_token("QUOTA"); BEGIN INITIAL; }
 <STRING>({letter}|{digit}|{blank_chars})* { print_token("STRING_LIT"); }
 
-
-
-
-{Cppcomment} { print_token("C++ Comment"); BEGIN CPPCOMMENT; }
-<CPPCOMMENT>"." {}
-<CPPCOMMENT> { comment_num++; BEGIN INITIAL; }
+{Cppcomment} { print_token("C++ Comment"); comment_num++;}
 
 "\/\*"      { printf("/");
               printf("*");
-              BEGIN COMMENT; }
-<COMMENT>"\*\/\n"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }      
-<COMMENT>"\*\/"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }
-<COMMENT>"."    { print_token(""); }
+              BEGIN CCOMMENT; }
+<CCOMMENT>"\n"      { comment_num++; }      
+<CCOMMENT>"\*\/"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }
+<CCOMMENT>"."    { print_token(""); }
 
 "\n"        { print_token("NEWLINE"); line_num++; }
 ":"         { print_token("COLON"); }
@@ -111,7 +104,6 @@ Cppcomment \/\/.*
 {id}        { print_token("IDENT"); }
 {inumber}   { print_token("INT_LIT"); }
 {fnumber}   { print_token("FLOAT_LIT"); }
-
 
 <<EOF>>     { line_num++; yyterminate(); }
 
