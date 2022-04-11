@@ -65,8 +65,8 @@ Cppcomment \/\/.*
 ";"         { print_token("SEMICOLON"); }
 ","         { print_token("COMMA"); }
 
-"\"" { print_token("QUOTA"); BEGIN STRING; }
-<STRING>({letter}|{blank_chars})* { print_token("STRING_LIT"); }
+"\"" { print_token("QUOTA"); BEGIN STRING; } 
+<STRING>({letter}|{digit}|{blank_chars})* { print_token("STRING_LIT"); }
 <STRING>"\"" { print_token("QUOTA"); BEGIN INITIAL; }
 
 
@@ -75,9 +75,11 @@ Cppcomment \/\/.*
 "\/\*"      { printf("/");
               printf("*");
               BEGIN CCOMMENT; }
-<CCOMMENT>"\n"      { comment_num++; line_num++;}      
+<CCOMMENT>{letter}*\n      {    printf(yytext);
+                                printf("        \t C Comment\n"); comment_num++; line_num++;}
+
 <CCOMMENT>"\*\/"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }
-<CCOMMENT>"."    { print_token(""); }
+
 
 "\n"        { print_token("NEWLINE"); line_num++; }
 ":"         { print_token("COLON"); }
