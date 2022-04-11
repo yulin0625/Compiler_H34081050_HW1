@@ -15,11 +15,10 @@
     int line_num = 0;
     int comment_num = 0;
     int last_comment_line = -1;
-    int is_string = 0;
+    // int is_string = 0;
 %}
 
 %x CCOMMENT
-%x CPPCOMMENT
 %x STRING
 
 /* Define regular expression label */
@@ -66,22 +65,22 @@ Cppcomment \/\/.*
 ";"         { print_token("SEMICOLON"); }
 ","         { print_token("COMMA"); }
 
-"\""         { print_token("QUOTA"); BEGIN STRING; }
+"\"" { print_token("QUOTA"); BEGIN STRING; }
+<STRING>({letter}|{blank_chars})* { print_token("STRING_LIT"); }
 <STRING>"\"" { print_token("QUOTA"); BEGIN INITIAL; }
-<STRING>({letter}|{digit}|{blank_chars})* { print_token("STRING_LIT"); }
 
-{Cppcomment} { print_token("C++ Comment"); comment_num++;}
+
+{Cppcomment} { print_token("C++ Comment"); comment_num++; }
 
 "\/\*"      { printf("/");
               printf("*");
               BEGIN CCOMMENT; }
-<CCOMMENT>"\n"      { comment_num++; }      
+<CCOMMENT>"\n"      { comment_num++; line_num++;}      
 <CCOMMENT>"\*\/"      { print_token("C Comment"); comment_num++; BEGIN INITIAL; }
 <CCOMMENT>"."    { print_token(""); }
 
 "\n"        { print_token("NEWLINE"); line_num++; }
 ":"         { print_token("COLON"); }
-
 "print"     { print_token("PRINT"); }
 "println"   { print_token("PRINTLN"); }
 "if"        { print_token("IF"); }
@@ -91,15 +90,15 @@ Cppcomment \/\/.*
 "float32"   { print_token("FLOAT"); }
 "string"    { print_token("STRING"); }
 "bool"      { print_token("BOOL"); }
-"true"     { print_token("TRUE"); }
-"false"    { print_token("FALSE"); }
+"true"      { print_token("TRUE"); }
+"false"     { print_token("FALSE"); }
 "var"       { print_token("VAR"); }
 "func"      { print_token("FUNC"); }
 "package"   { print_token("PACKAGE"); }
 "return"    { print_token("RETURN"); }
 "switch"    { print_token("SWITCH"); }
-"case"     { print_token("CASE"); }
-"default"  { print_token("DEFAULT"); }
+"case"      { print_token("CASE"); }
+"default"   { print_token("DEFAULT"); }
 
 {id}        { print_token("IDENT"); }
 {inumber}   { print_token("INT_LIT"); }
