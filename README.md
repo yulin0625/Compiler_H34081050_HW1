@@ -21,3 +21,9 @@ $ sudo apt install flex bison git python3 python3-pip
 ```python
 pip3 install local-judge
 ```
+
+### judge方式
+typing judge in your terminal.
+```shell
+$ judge
+```
